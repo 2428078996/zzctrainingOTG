@@ -7,7 +7,6 @@ const getDefaultState = () => {
     token: getToken(),
     name: '',
     avatar: '',
-
     buttons: [],
     menus: ''
   }
@@ -41,9 +40,9 @@ const mutations = {
 const actions = {
   // user login
   login({ commit }, userInfo) {
-    const { username, password } = userInfo
+    const { username, password ,verifyCode,tempToken} = userInfo
     return new Promise((resolve, reject) => {
-      login({ username: username.trim(), password: password }).then((result) => {
+      login({ username: username.trim(), password ,verifyCode,tempToken}).then((result) => {
         commit('SET_TOKEN', result.map.token)
         setToken(result.map.token)
         resolve()
@@ -58,7 +57,6 @@ const actions = {
     return new Promise((resolve, reject) => {
       getInfo(state.token).then(response => {
         const { data } = response
-
         if (!data) {
           return reject('验证失败！请重新登录')
         }
@@ -66,7 +64,6 @@ const actions = {
 
         commit('SET_NAME', name)
         commit('SET_AVATAR', avatar)
-
         commit('SET_BUTTONS', data.buttons)
         commit('SET_MENUS', data.routers)
         resolve(data)

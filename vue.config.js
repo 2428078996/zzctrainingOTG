@@ -6,7 +6,7 @@ function resolve(dir) {
   return path.join(__dirname, dir)
 }
 
-const name = defaultSettings.title || 'vue Admin Template' // page title
+const name = defaultSettings.title // page title
 
 // If your port is set to 80,
 // use administrator privileges to execute the command line.
@@ -38,11 +38,11 @@ module.exports = {
     },
     // before: require('./mock/mock-server.js')
     proxy: {
-      '/prod-api': { // 匹配所有以 '/dev-api'开头的请求路径
+      '/dev-api': { // 匹配所有以 '/dev-api'开头的请求路径
         target: 'http://localhost:8802',
         changeOrigin: true, // 支持跨域
         pathRewrite: { // 重写路径: 去掉路径中开头的'/dev-api'
-          '^/prod-api': ''
+          '^/dev-api': '/'
         }
       }
     }

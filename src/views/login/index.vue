@@ -1,6 +1,7 @@
 <template>
   <div class="login-container">
-    <el-form ref="loginForm" :model="loginForm" :rules="loginRules" class="login-form" auto-complete="on" label-position="left">
+    <el-form ref="loginForm" :model="loginForm" :rules="loginRules" class="login-form" auto-complete="on"
+      label-position="left">
 
       <div class="title-container">
         <h3 class="title">通用后台权限管理</h3>
@@ -10,51 +11,45 @@
         <span class="svg-container">
           <svg-icon icon-class="user" />
         </span>
-        <el-input
-          ref="username"
-          v-model="loginForm.username"
-          placeholder="用户名"
-          name="username"
-          type="text"
-          tabindex="1"
-          auto-complete="on"
-        />
+        <el-input ref="username" v-model="loginForm.username" placeholder="用户名" name="username" type="text" tabindex="1"
+          auto-complete="on" />
       </el-form-item>
 
       <el-form-item prop="password">
         <span class="svg-container">
           <svg-icon icon-class="password" />
         </span>
-        <el-input
-          :key="passwordType"
-          ref="password"
-          v-model="loginForm.password"
-          :type="passwordType"
-          placeholder="密码"
-          name="password"
-          tabindex="2"
-          auto-complete="on"
-          @keyup.enter.native="handleLogin"
-        />
+        <el-input :key="passwordType" ref="password" v-model="loginForm.password" :type="passwordType" placeholder="密码"
+          name="password" tabindex="2" auto-complete="on" @keyup.enter.native="handleLogin" />
         <span class="show-pwd" @click="showPwd">
           <svg-icon :icon-class="passwordType === 'password' ? 'eye' : 'eye-open'" />
         </span>
       </el-form-item>
 
-      <el-button :loading="loading" type="primary" style="width:100%;margin-bottom:30px;" @click.native.prevent="handleLogin">登录</el-button>
+      <el-form-item prop="verifyCode">
+        <span class="svg-container">
+          <svg-icon icon-class="password" />
+        </span>
+        <el-input ref="verifyCode" v-model="loginForm.verifyCode" placeholder="验证码" name="verifyCode" tabindex="1"
+          auto-complete="on" class="yzm-input" />
+        <img :src="imgUrl" class="yzm-img" @click="getTempToken">
+      </el-form-item>
+
+      <el-button :loading="loading" type="primary" style="width:100%;margin-bottom:30px;"
+        @click.native.prevent="handleLogin">登录</el-button>
 
     </el-form>
   </div>
 </template>
 
 <script>
-import { validUsername } from '@/utils/validate'
+import { getTempToken, getVarifyImage } from '@/api/login'
 
 export default {
   name: 'Login',
   data() {
     const validateUsername = (rule, value, callback) => {
-      if (value.username === '') {
+      if (value === '') {
         callback(new Error('请确认你的用户名'))
       } else {
         callback()
@@ -67,15 +62,28 @@ export default {
         callback()
       }
     }
+    const validateCode = (rule, value, callback) => {
+      if (value === ''){
+        callback(new Error('请输入验证码'))
+      }else if (value.length > 4) {
+        callback(new Error('验证码错误'))
+      } else {
+        callback()
+      }
+    }
     return {
       loginForm: {
         username: '',
-        password: ''
+        password: '',
+        verifyCode: '',
+        tempToken: ''
       },
       loginRules: {
         username: [{ required: true, trigger: 'blur', validator: validateUsername }],
-        password: [{ required: true, trigger: 'blur', validator: validatePassword }]
+        password: [{ required: true, trigger: 'blur', validator: validatePassword }],
+        verifyCode: [{ required: true, trigger: 'blur', validator: validateCode }],
       },
+      imgUrl: "",
       loading: false,
       passwordType: 'password',
       redirect: undefined
@@ -83,12 +91,13 @@ export default {
   },
   watch: {
     $route: {
-      handler: function(route) {
+      handler: function (route) {
         this.redirect = route.query && route.query.redirect
       },
       immediate: true
     }
   },
+
   methods: {
     showPwd() {
       if (this.passwordType === 'password') {
@@ -111,12 +120,30 @@ export default {
             this.loading = false
           })
         } else {
-          console.log('error submit!!')
           return false
         }
       })
+    },
+
+    getTempToken() {
+      let time = parseInt(new Date().getTime() / 1000) + ''
+
+      getTempToken(time).then((data) => {
+
+        this.loginForm.tempToken = data.msg
+        this.getVarifyImage(data.msg)
+      })
+    },
+
+    getVarifyImage(msg) {
+      getVarifyImage(msg).then(res => {
+        this.imgUrl = window.URL.createObjectURL(res.data)
+      })
     }
-  }
+  },
+  created() {
+    this.getTempToken()
+  },
 }
 </script>
 
@@ -124,8 +151,8 @@ export default {
 /* 修复input 背景不协调 和光标变色 */
 /* Detail see https://github.com/PanJiaChen/vue-element-admin/pull/927 */
 
-$bg:#283443;
-$light_gray:#fff;
+$bg: #283443;
+$light_gray: #fff;
 $cursor: #fff;
 
 @supports (-webkit-mask: none) and (not (cater-color: $cursor)) {
@@ -168,9 +195,9 @@ $cursor: #fff;
 </style>
 
 <style lang="scss" scoped>
-$bg:#2d3a4b;
-$dark_gray:#889aa4;
-$light_gray:#eee;
+$bg: #2d3a4b;
+$dark_gray: #889aa4;
+$light_gray: #eee;
 
 .login-container {
   min-height: 100%;
@@ -228,5 +255,19 @@ $light_gray:#eee;
     cursor: pointer;
     user-select: none;
   }
-}
-</style>
+
+  .yzm-input {
+    width: 50%;
+  }
+
+  .yzm-img {
+    height: 50px;
+    width: 120px;
+    margin-top: 1px;
+    margin-right: 1px;
+    float: right;
+    border-radius: 3px;
+    cursor: pointer;
+
+  }
+}</style>
